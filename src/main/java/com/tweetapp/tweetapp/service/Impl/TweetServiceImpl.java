@@ -16,12 +16,14 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class TweetServiceImpl implements TweetService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TweetServiceImpl.class);
 
     private final TweetRepository tweetRepository;
     private final UserRepository userRepository;
 
     @Override
     public TweetResponse createTweet(String username, TweetRequest request) {
+        log.info("User '{}' is creating a tweet: {}", username, request.getContent());
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -37,6 +39,7 @@ public class TweetServiceImpl implements TweetService {
 
     @Override
     public List<TweetResponse> getAllTweets() {
+        log.info("Retrieving all tweets");
         return tweetRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(t -> new TweetResponse(t.getId(), t.getUser().getUsername(), t.getContent(), t.getCreatedAt()))

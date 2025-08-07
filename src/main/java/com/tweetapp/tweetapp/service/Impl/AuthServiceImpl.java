@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthServiceImpl.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -24,7 +25,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse signup(SignupRequest request) {
+        log.info("Signup attempt for username: {}", request.getUsername());
         if (userRepository.existsByUsername(request.getUsername())) {
+            log.warn("Signup failed: Username already exists: {}", request.getUsername());
             throw new RuntimeException("Username already exists");
         }
 
@@ -41,14 +44,21 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse signin(SigninRequest request) {
-        authenticationManager.authenticate(
+        log.info("Signin attempt for username: {}", request.getUsername());
+        try {
+            authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-        );
+            );
+        } catch (Exception e) {
+            log.warn("Signin failed for username: {}: {}", request.getUsername(), e.getMessage());
+            throw e;
+        }
 
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String token = jwtService.generateToken(user);
+        log.info("Signin successful for username: {}", request.getUsername());
         return new AuthResponse(token, user.getUsername());
     }
 }
