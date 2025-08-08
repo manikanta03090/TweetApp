@@ -28,10 +28,4 @@ The app will run at [http://localhost:3000](http://localhost:3000) and connect t
 - Axios
 - Formik & Yup
 
-## Screenshots
-![Auth Page](./screenshots/auth.png)
-![Feed Page](./screenshots/feed.png)
 
----
-
-For backend API, see `/api` folder and Spring Boot project.
