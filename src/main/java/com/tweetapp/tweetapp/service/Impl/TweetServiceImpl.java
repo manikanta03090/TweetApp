@@ -9,6 +9,9 @@ import com.tweetapp.tweetapp.repository.UserRepository;
 import com.tweetapp.tweetapp.service.TweetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.GlobalOpenTelemetry;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +26,9 @@ public class TweetServiceImpl implements TweetService {
 
     @Override
     public TweetResponse createTweet(String username, TweetRequest request) {
+        Tracer tracer = GlobalOpenTelemetry.getTracer("com.tweetapp.TweetServiceImpl");
+        Span span = tracer.spanBuilder("createTweet").startSpan();
+        try {
         log.info("User '{}' is creating a tweet: {}", username, request.getContent());
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -35,14 +41,23 @@ public class TweetServiceImpl implements TweetService {
 
         Tweet saved = tweetRepository.save(tweet);
         return new TweetResponse(saved.getId(), user.getUsername(), saved.getContent(), saved.getCreatedAt());
+        } finally {
+            span.end();
+        }
     }
 
     @Override
     public List<TweetResponse> getAllTweets() {
+        Tracer tracer = GlobalOpenTelemetry.getTracer("com.tweetapp.TweetServiceImpl");
+        Span span = tracer.spanBuilder("getAllTweets").startSpan();
+        try {
         log.info("Retrieving all tweets");
         return tweetRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(t -> new TweetResponse(t.getId(), t.getUser().getUsername(), t.getContent(), t.getCreatedAt()))
                 .toList();
+        } finally {
+            span.end();
+        }
     }
 }
