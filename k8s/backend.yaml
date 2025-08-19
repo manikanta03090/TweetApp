@@ -1,0 +1,73 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secret
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: "password"   # keep secret
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+data:
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/tweetapp?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+  SPRING_DATASOURCE_USERNAME: "root"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_DATABASE_PLATFORM: "org.hibernate.dialect.MySQL8Dialect"
+  SPRING_JPA_SHOW_SQL: "true"
+  SPRING_ZIPKIN_BASE_URL: "http://zipkin:9411/"
+  SPRING_SLEUTH_SAMPLER_PROBABILITY: "1.0"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus"
+  MANAGEMENT_ENDPOINTS_WEB_BASE_PATH: "/actuator"
+  MANAGEMENT_ENDPOINT_PROMETHEUS_ENABLED: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: manikanta03090/backend:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: backend-secret
+          env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: MYSQL_ROOT_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

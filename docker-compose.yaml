@@ -8,7 +8,7 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: tweetapp
     ports:
-      - "3306:3306"
+      - "3307:3306"
     networks:
       - otel-net
 
@@ -20,17 +20,17 @@ services:
     networks:
       - otel-net
 
-  tweetapp:
+  backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: tweetapp
+    container_name: backend
     ports:
       - "8080:8080"
     environment:
       OTEL_TRACES_EXPORTER: zipkin
       OTEL_EXPORTER_ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
-      OTEL_SERVICE_NAME: tweetapp
+      OTEL_SERVICE_NAME: backend
       JAVA_TOOL_OPTIONS: -javaagent:/otel/opentelemetry-javaagent.jar
     depends_on:
       - mysql
@@ -38,17 +38,17 @@ services:
     networks:
       - otel-net
 
-  frontendapp:
+  frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: fd-tweetapp
+    container_name: frontend
     ports:
       - "3000:80"
     environment:
-      REACT_APP_API_URL: http://tweetapp:8080
+      REACT_APP_API_URL: http://backend:8080/api
     depends_on:
-      - tweetapp
+      - backend
     networks:
       - otel-net
 
