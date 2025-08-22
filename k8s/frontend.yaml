@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: frontend-config
 data:
-  REACT_APP_API_URL: "http://backend:8080/api"  # This will be used in production
+  REACT_APP_API_URL: "https://tweetapp.example.com/api"  # This will be used in production
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -59,4 +59,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-  type: NodePort
+  type: ClusterIP
