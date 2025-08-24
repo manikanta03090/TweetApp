@@ -45,10 +45,14 @@ jobs:
       # 6. Run SonarCloud Scan
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
-        with:
-          args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_FRONTEND }}
-            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
+      - name: SonarCloud Scan
+        run: sonar-scanner \
+         -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_FRONTEND }} \
+         -Dsonar.organization=${{ secrets.SONAR_ORG }} \
+         -Dsonar.sources=. \
+         -Dsonar.exclusions=**/*.java \
+         -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+         -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -83,4 +87,5 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_IMAGE_NAME }}:latest
+
 
