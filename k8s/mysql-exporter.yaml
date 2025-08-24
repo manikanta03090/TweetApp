@@ -1,0 +1,74 @@
+# ===================================================================
+# Final MySQL Exporter configuration for the 'logging' namespace
+# ===================================================================
+
+# 🔹 Secret for the Exporter User
+# This secret is now correctly placed in the 'logging' namespace.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-exporter-secret
+  namespace: logging # CRITICAL: Ensures the secret is in the correct namespace.
+type: Opaque
+stringData:
+  .my.cnf: |
+    [client]
+    user=exporter
+    password=password
+    # CRITICAL: The host must be the full DNS name because the database
+    # is in the 'default' namespace.
+    host=mysql.default.svc.cluster.local
+
+---
+# 🔹 MySQL Exporter Deployment
+# This deployment runs in 'logging' and uses the secret above.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysqld-exporter
+  namespace: logging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysqld-exporter
+  template:
+    metadata:
+      labels:
+        app: mysqld-exporter
+    spec:
+      # The pod will use the 'default' service account in the 'logging' namespace,
+      # which your ClusterRoleBinding gives permissions to.
+      containers:
+        - name: mysqld-exporter
+          image: prom/mysqld-exporter:v0.15.0
+          # The host/address is now handled by the .my.cnf file, so we only need this one argument.
+          args:
+            - "--config.my-cnf=/etc/mysql/.my.cnf"
+          ports:
+            - containerPort: 9104
+          volumeMounts:
+            - name: mysql-credentials-volume
+              mountPath: /etc/mysql
+              readOnly: true
+      volumes:
+        - name: mysql-credentials-volume
+          secret:
+            # This correctly points to the secret in the same ('logging') namespace.
+            secretName: mysql-exporter-secret
+
+---
+# 🔹 Service to expose the exporter's metrics
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-metrics
+  namespace: logging
+spec:
+  selector:
+    app: mysqld-exporter # Selector matches the clean deployment name.
+  ports:
+    - name: metrics
+      port: 9104
+      targetPort: 9104
+

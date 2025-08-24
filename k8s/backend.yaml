@@ -5,7 +5,7 @@ metadata:
   name: backend-secret
 type: Opaque
 stringData:
-  MYSQL_ROOT_PASSWORD: "password"   # keep secret
+  MYSQL_ROOT_PASSWORD: password
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -29,6 +29,10 @@ metadata:
   name: backend
   labels:
     app: backend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/actuator/prometheus"    
 spec:
   replicas: 2
   selector:

@@ -1,27 +1,30 @@
----
+# 🔹 ConfigMap with Initialization SQL
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: ConfigMap
 metadata:
-  name: mysql-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Gi
+  name: mysql-init-script
+data:
+  exporter-user.sql: |
+    CREATE USER IF NOT EXISTS 'exporter'@'%' IDENTIFIED BY 'password';
+    GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%';
+    FLUSH PRIVILEGES;
+
 ---
+# 🔹 Headless Service for StatefulSet
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
 spec:
-  clusterIP: None  # headless service for stable DNS
+  clusterIP: None
   ports:
     - port: 3306
       targetPort: 3306
   selector:
     app: mysql
+
 ---
+# 🔹 MySQL StatefulSet
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -54,11 +57,35 @@ spec:
           volumeMounts:
             - name: mysql-storage
               mountPath: /var/lib/mysql
+            - name: mysql-init-script
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          livenessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$MYSQL_ROOT_PASSWORD"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$MYSQL_ROOT_PASSWORD"]
+            initialDelaySeconds: 20
+            periodSeconds: 5
+      volumes:
+        - name: mysql-init-script
+          configMap:
+            name: mysql-init-script
   volumeClaimTemplates:
     - metadata:
         name: mysql-storage
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: 5Gi
+
