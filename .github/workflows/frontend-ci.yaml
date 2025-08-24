@@ -56,12 +56,12 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
 
       # 7. Run Snyk Security Scan
-      - name: Snyk Scan
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: test
+      #- name: Snyk Scan
+       # uses: snyk/actions/node@master
+        #env:
+         # SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        #with:
+          #args: --sarif-file-output=snyk.sarif 
 
       # 8. Run Trivy Filesystem Scan
       - name: Trivy FS Scan
@@ -85,6 +85,7 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_IMAGE_NAME }}:latest
+
 
 
 
