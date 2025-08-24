@@ -51,7 +51,7 @@ jobs:
           projectBaseDir: frontend
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY_FRONTEND }}
-            -Dsonar.organization=${{ secrets.SONAR_ORG }}
+            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
             -Dsonar.sources=.
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
 
@@ -85,3 +85,4 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_IMAGE_NAME }}:latest
+
