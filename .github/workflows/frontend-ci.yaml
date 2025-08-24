@@ -57,7 +57,7 @@ jobs:
 
       # 7. Run Snyk Security Scan
       - name: Snyk Scan
-        uses: snyk/actions/node@v4
+        uses: snyk/actions/node@v4.0.0
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -85,5 +85,6 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_IMAGE_NAME }}:latest
+
 
 
